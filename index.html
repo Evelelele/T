@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>Learning Command Center | 黑客终端·任务控制台</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: #000000;
+            font-family: 'Fira Code', 'Courier New', 'SF Mono', 'JetBrains Mono', monospace;
+            color: #e0e0e0;
+            padding: 0;
+            margin: 0;
+            min-height: 100vh;
+            letter-spacing: 0.02em;
+        }
+
+        .app-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 16px 12px 80px 12px;
+            position: relative;
+            min-height: 100vh;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            border-bottom: 1px solid #2a2a2a;
+            padding-bottom: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+        .title-section {
+            display: flex;
+            flex-direction: column;
+        }
+        .glitch {
+            font-size: 1.6rem;
+            font-weight: 500;
+            letter-spacing: -1px;
+            color: #f0f0f0;
+            text-shadow: 0 0 2px #fff;
+        }
+        .sub {
+            font-size: 0.7rem;
+            color: #6a6a6a;
+            margin-top: 4px;
+            font-family: monospace;
+        }
+        .menu-icon {
+            background: none;
+            border: 1px solid #333;
+            font-size: 1.8rem;
+            cursor: pointer;
+            padding: 6px 12px;
+            color: #ccc;
+            background: #0a0a0a;
+            transition: 0.2s;
+            line-height: 1;
+            border-radius: 6px;
+        }
+        .menu-icon:hover, .menu-icon:active {
+            background: #1f1f1f;
+            border-color: #fff;
+            color: white;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            background: #0c0c0c;
+            padding: 12px 16px;
+            border-left: 3px solid #3a3a3a;
+            margin-bottom: 24px;
+            font-size: 0.75rem;
+            font-family: monospace;
+            border-radius: 4px;
+        }
+        .stats span {
+            color: #aaa;
+        }
+        .stats .value {
+            color: #fff;
+            font-weight: bold;
+            margin-left: 6px;
+        }
+
+        .task-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .task-card {
+            background: #0a0a0a;
+            border: 1px solid #222;
+            border-radius: 8px;
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.1s ease;
+        }
+        .task-card:active {
+            background: #111;
+        }
+        .task-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            overflow: hidden;
+        }
+        .task-title {
+            font-size: 1rem;
+            font-weight: 500;
+            word-break: break-word;
+            letter-spacing: -0.2px;
+            color: #eaeaea;
+        }
+        .task-meta {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .badge {
+            font-size: 0.65rem;
+            padding: 2px 8px;
+            border-radius: 30px;
+            font-family: monospace;
+            text-transform: uppercase;
+            background: #1a1a1a;
+            color: #bbb;
+            border-left: 2px solid;
+        }
+        .badge.daily {
+            border-left-color: #ffffff;
+            color: #dddddd;
+        }
+        .badge.single {
+            border-left-color: #6e6e6e;
+            color: #9e9e9e;
+        }
+        .task-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        .action-btn {
+            background: none;
+            border: none;
+            font-size: 1.3rem;
+            cursor: pointer;
+            color: #888;
+            padding: 6px;
+            transition: 0.15s;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+        }
+        .action-btn:active {
+            background: #1e1e1e;
+            color: white;
+        }
+        .complete-btn {
+            color: #b0b0b0;
+            border: 1px solid #2e2e2e;
+            border-radius: 40px;
+            font-size: 1rem;
+            font-weight: bold;
+        }
+        .complete-btn:active {
+            background: #2c2c2c;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 48px 20px;
+            color: #3a3a3a;
+            border: 1px dashed #222;
+            border-radius: 12px;
+            font-size: 0.85rem;
+        }
+
+        .fab {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #1f1f1f;
+            color: white;
+            border: 1px solid #3f3f3f;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+            transition: 0.2s;
+            z-index: 20;
+            font-weight: 300;
+        }
+        .fab:active {
+            background: #2e2e2e;
+            transform: scale(0.96);
+        }
+
+        .drawer-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            visibility: hidden;
+            opacity: 0;
+            transition: visibility 0.2s, opacity 0.2s;
+        }
+        .drawer-overlay.open {
+            visibility: visible;
+            opacity: 1;
+        }
+        .drawer {
+            position: fixed;
+            top: 0;
+            right: -90%;
+            width: 85%;
+            max-width: 320px;
+            height: 100%;
+            background: #030303;
+            border-left: 1px solid #2a2a2a;
+            box-shadow: -5px 0 20px rgba(0,0,0,0.8);
+            padding: 24px 20px;
+            transition: right 0.25s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            z-index: 1001;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+        .drawer-overlay.open .drawer {
+            right: 0;
+        }
+        .drawer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #2c2c2c;
+            padding-bottom: 16px;
+        }
+        .drawer-header h3 {
+            font-size: 1.2rem;
+            font-weight: 400;
+            letter-spacing: -0.5px;
+        }
+        .close-drawer {
+            background: none;
+            border: none;
+            font-size: 1.8rem;
+            color: #aaa;
+            cursor: pointer;
+            line-height: 1;
+        }
+        .search-box {
+            width: 100%;
+            background: #111;
+            border: 1px solid #2e2e2e;
+            padding: 12px 16px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            color: #f0f0f0;
+            border-radius: 6px;
+            outline: none;
+        }
+        .search-box:focus {
+            border-color: #fff;
+        }
+        .drawer-info {
+            font-size: 0.7rem;
+            color: #555;
+            margin-top: 8px;
+            text-align: center;
+        }
+        .clear-search-btn {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            padding: 8px;
+            border-radius: 6px;
+            font-family: monospace;
+            color: #ccc;
+            cursor: pointer;
+            text-align: center;
+        }
+        .clear-search-btn:active {
+            background: #2a2a2a;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            visibility: hidden;
+            opacity: 0;
+            transition: 0.2s;
+        }
+        .modal.open {
+            visibility: visible;
+            opacity: 1;
+        }
+        .modal-content {
+            background: #0c0c0c;
+            width: 85%;
+            max-width: 360px;
+            border: 1px solid #2f2f2f;
+            border-radius: 16px;
+            padding: 24px 20px;
+            box-shadow: 0 8px 24px black;
+        }
+        .modal-content input, .modal-content select {
+            width: 100%;
+            background: #000;
+            border: 1px solid #333;
+            padding: 12px;
+            margin: 16px 0 12px;
+            font-family: monospace;
+            color: white;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 20px;
+        }
+        .modal-buttons button {
+            background: #1a1a1a;
+            border: 1px solid #3a3a3a;
+            padding: 8px 18px;
+            font-family: monospace;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .modal-buttons button.primary {
+            background: #2c2c2c;
+            border-color: #fff;
+        }
+
+        ::-webkit-scrollbar {
+            width: 4px;
+            background: #0a0a0a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2e2e2e;
+        }
+        button {
+            cursor: pointer;
+        }
+        @media (max-width: 480px) {
+            .app-container {
+                padding: 12px 10px 80px 10px;
+            }
+            .task-card {
+                padding: 12px 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="header">
+        <div class="title-section">
+            <div class="glitch">>_ LCC_TERMINAL</div>
+            <div class="sub">// LEARNING COMMAND CENTER // v1.2</div>
+        </div>
+        <button class="menu-icon" id="drawerTrigger">☰</button>
+    </div>
+    
+    <div class="stats">
+        <div><span>⟫ 每日打卡</span><span class="value" id="dailyStats">0</span></div>
+        <div><span>⟫ 单次任务</span><span class="value" id="singleStats">0</span></div>
+        <div><span>⟫ 活跃</span><span class="value" id="activeCount">0</span></div>
+    </div>
+
+    <div class="task-list" id="taskListContainer">
+        <div class="empty-state">[ 无待办任务 ]<br> 按 + 添加新任务</div>
+    </div>
+</div>
+
+<button class="fab" id="openAddModalBtn">+</button>
+
+<!-- 抽屉: 搜索模块 -->
+<div class="drawer-overlay" id="drawerOverlay">
+    <div class="drawer">
+        <div class="drawer-header">
+            <h3>🔍 SEARCH_VAULT</h3>
+            <button class="close-drawer" id="closeDrawerBtn">✕</button>
+        </div>
+        <input type="text" id="searchInput" class="search-box" placeholder="> 搜索任务标题..." autocomplete="off">
+        <button id="clearSearchBtn" class="clear-search-btn">⌧ 清除搜索</button>
+        <div class="drawer-info">⌨️ 实时过滤 · 添加任务后自动清空搜索</div>
+    </div>
+</div>
+
+<!-- 模态框: 添加/编辑任务 -->
+<div class="modal" id="taskModal">
+    <div class="modal-content">
+        <h3 id="modalTitle">✚ 新任务</h3>
+        <input type="text" id="taskTitleInput" placeholder="任务描述 / 课程名称" autocomplete="off">
+        <select id="taskTypeSelect">
+            <option value="daily">每日打卡 (每日重置)</option>
+            <option value="single">单次任务 (完成后消失)</option>
+        </select>
+        <div class="modal-buttons">
+            <button id="modalCancelBtn">取消</button>
+            <button id="modalConfirmBtn" class="primary">确认</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ---------- 存储KEY ----------
+    const STORAGE_TASKS = 'lcc_tasks';
+    const STORAGE_LAST_DATE = 'lcc_last_reset_date';
+
+    let tasks = [];          
+    let filterText = "";    
+    let editingTaskId = null;  
+
+    function getTodayStr() {
+        const d = new Date();
+        return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+    }
+
+    function resetDailyIfNeeded() {
+        const today = getTodayStr();
+        const storedLastDate = localStorage.getItem(STORAGE_LAST_DATE);
+        if (storedLastDate !== today) {
+            tasks = tasks.map(task => {
+                if (task.type === 'daily') {
+                    return { ...task, todayCompleted: false };
+                }
+                return task;
+            });
+            saveTasksToLocal();
+            localStorage.setItem(STORAGE_LAST_DATE, today);
+        }
+    }
+
+    function saveTasksToLocal() {
+        localStorage.setItem(STORAGE_TASKS, JSON.stringify(tasks));
+    }
+
+    function loadTasks() {
+        const stored = localStorage.getItem(STORAGE_TASKS);
+        if (stored) {
+            tasks = JSON.parse(stored);
+        } else {
+            tasks = [
+                { id: Date.now() + 1, title: "阅读《黑客与画家》", type: "daily", todayCompleted: false },
+                { id: Date.now() + 2, title: "完成命令行笔记", type: "single" },
+                { id: Date.now() + 3, title: "每日打卡: 冥想10分钟", type: "daily", todayCompleted: false },
+                { id: Date.now() + 4, title: "学习Rust基础", type: "single" },
+                { id: Date.now() + 5, title: "高等数学 - 微分方程", type: "single" }
+            ];
+            saveTasksToLocal();
+        }
+        resetDailyIfNeeded();
+    }
+
+    function getActiveTasks() {
+        let active = tasks.filter(task => {
+            if (task.type === 'daily') {
+                return task.todayCompleted === false;
+            }
+            return true;
+        });
+        if (filterText.trim() !== "") {
+            const keyword = filterText.trim().toLowerCase();
+            active = active.filter(t => t.title.toLowerCase().includes(keyword));
+        }
+        return active;
+    }
+
+    function updateStats() {
+        const dailyUncompleted = tasks.filter(t => t.type === 'daily' && t.todayCompleted === false).length;
+        const singleCount = tasks.filter(t => t.type === 'single').length;
+        const activeTotal = getActiveTasks().length;
+        document.getElementById('dailyStats').innerText = dailyUncompleted;
+        document.getElementById('singleStats').innerText = singleCount;
+        document.getElementById('activeCount').innerText = activeTotal;
+    }
+
+    function escapeHtml(str) {
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    function renderTaskList() {
+        const container = document.getElementById('taskListContainer');
+        const activeTasks = getActiveTasks();
+        
+        if (activeTasks.length === 0) {
+            let msg = filterText.trim() ? "⛔ 没有匹配「" + escapeHtml(filterText) + "」的任务" : "⛔ 无待办任务 | 按 + 添加";
+            container.innerHTML = `<div class="empty-state">${msg}<br> 点击 + 添加课程或任务</div>`;
+            updateStats();
+            return;
+        }
+        
+        let html = '';
+        activeTasks.forEach(task => {
+            const typeLabel = task.type === 'daily' ? '⟳ 每日打卡' : '⚡ 单次任务';
+            const badgeClass = task.type === 'daily' ? 'daily' : 'single';
+            const completeBtnText = task.type === 'daily' ? '✓ 打卡' : '✔ 完成';
+            html += `
+                <div class="task-card" data-id="${task.id}">
+                    <div class="task-info">
+                        <div class="task-title">> ${escapeHtml(task.title)}</div>
+                        <div class="task-meta">
+                            <span class="badge ${badgeClass}">${typeLabel}</span>
+                        </div>
+                    </div>
+                    <div class="task-actions">
+                        <button class="action-btn complete-btn" data-action="complete" data-id="${task.id}">${completeBtnText}</button>
+                        <button class="action-btn" data-action="edit" data-id="${task.id}">✎</button>
+                        <button class="action-btn" data-action="delete" data-id="${task.id}">🗑</button>
+                    </div>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+        updateStats();
+    }
+
+    // ---------- 核心操作 ----------
+    function addTask(title, type) {
+        if (!title.trim()) {
+            alert("任务标题不能为空");
+            return false;
+        }
+        const newTask = {
+            id: Date.now(),
+            title: title.trim(),
+            type: type,
+        };
+        if (type === 'daily') {
+            newTask.todayCompleted = false;
+        }
+        tasks.push(newTask);
+        saveTasksToLocal();
+        resetDailyIfNeeded();   
+        
+        // 清空搜索词，确保新任务可见
+        filterText = "";
+        const searchInputElem = document.getElementById('searchInput');
+        if (searchInputElem) searchInputElem.value = "";
+        
+        renderTaskList();
+        return true;
+    }
+
+    function editTask(taskId, newTitle, newType) {
+        const index = tasks.findIndex(t => t.id == taskId);
+        if (index === -1) return false;
+        if (!newTitle.trim()) return false;
+        
+        if (tasks[index].type !== newType) {
+            if (newType === 'daily') {
+                tasks[index] = { id: tasks[index].id, title: newTitle.trim(), type: 'daily', todayCompleted: false };
+            } else {
+                tasks[index] = { id: tasks[index].id, title: newTitle.trim(), type: 'single' };
+            }
+        } else {
+            tasks[index].title = newTitle.trim();
+        }
+        saveTasksToLocal();
+        resetDailyIfNeeded();
+        
+        filterText = "";
+        const searchInputElem = document.getElementById('searchInput');
+        if (searchInputElem) searchInputElem.value = "";
+        renderTaskList();
+        return true;
+    }
+
+    function completeTask(taskId) {
+        const task = tasks.find(t => t.id == taskId);
+        if (!task) return;
+        if (task.type === 'daily') {
+            if (!task.todayCompleted) {
+                task.todayCompleted = true;
+                saveTasksToLocal();
+                renderTaskList();
+            } else {
+                alert("今日已完成打卡");
+            }
+        } else {
+            deleteTaskById(taskId);
+        }
+    }
+    
+    function deleteTaskById(taskId) {
+        tasks = tasks.filter(t => t.id != taskId);
+        saveTasksToLocal();
+        renderTaskList();
+    }
+
+    // ---------- 模态框 ----------
+    const modalEl = document.getElementById('taskModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const taskTitleInput = document.getElementById('taskTitleInput');
+    const taskTypeSelect = document.getElementById('taskTypeSelect');
+    
+    function openModalForAdd() {
+        editingTaskId = null;
+        modalTitle.innerText = "✚ 新建任务";
+        taskTitleInput.value = "";
+        taskTypeSelect.value = "daily";
+        modalEl.classList.add('open');
+        setTimeout(() => taskTitleInput.focus(), 50);
+    }
+    
+    function openModalForEdit(taskId) {
+        const task = tasks.find(t => t.id == taskId);
+        if (!task) return;
+        editingTaskId = taskId;
+        modalTitle.innerText = "✎ 编辑任务";
+        taskTitleInput.value = task.title;
+        taskTypeSelect.value = task.type;
+        modalEl.classList.add('open');
+        setTimeout(() => taskTitleInput.focus(), 50);
+    }
+    
+    function closeModal() {
+        modalEl.classList.remove('open');
+        editingTaskId = null;
+    }
+    
+    function onModalConfirm() {
+        const title = taskTitleInput.value.trim();
+        const type = taskTypeSelect.value;
+        if (!title) {
+            alert("请输入任务标题");
+            return;
+        }
+        if (editingTaskId !== null) {
+            editTask(editingTaskId, title, type);
+        } else {
+            addTask(title, type);
+        }
+        closeModal();
+    }
+    
+    // ---------- 抽屉与搜索 ----------
+    const drawerOverlay = document.getElementById('drawerOverlay');
+    const searchInputElem = document.getElementById('searchInput');
+    
+    function openDrawer() {
+        drawerOverlay.classList.add('open');
+        setTimeout(() => searchInputElem.focus(), 50);
+    }
+    function closeDrawer() {
+        drawerOverlay.classList.remove('open');
+    }
+    
+    function handleSearchInput() {
+        filterText = searchInputElem.value;
+        renderTaskList();
+    }
+    
+    function clearSearch() {
+        filterText = "";
+        if (searchInputElem) searchInputElem.value = "";
+        renderTaskList();
+        closeDrawer(); // 可选：清空后关闭抽屉
+    }
+    
+    // ---------- 事件绑定 ----------
+    function setupTaskDelegation() {
+        const container = document.getElementById('taskListContainer');
+        container.addEventListener('click', (e) => {
+            const btn = e.target.closest('[data-action]');
+            if (!btn) return;
+            const action = btn.getAttribute('data-action');
+            const taskId = parseInt(btn.getAttribute('data-id'));
+            if (isNaN(taskId)) return;
+            
+            if (action === 'complete') {
+                completeTask(taskId);
+            } else if (action === 'edit') {
+                openModalForEdit(taskId);
+            } else if (action === 'delete') {
+                if (confirm("永久删除任务？")) {
+                    deleteTaskById(taskId);
+                }
+            }
+            e.stopPropagation();
+        });
+    }
+    
+    function bindGlobalEvents() {
+        document.getElementById('drawerTrigger').addEventListener('click', openDrawer);
+        document.getElementById('closeDrawerBtn').addEventListener('click', closeDrawer);
+        drawerOverlay.addEventListener('click', (e) => {
+            if (e.target === drawerOverlay) closeDrawer();
+        });
+        searchInputElem.addEventListener('input', handleSearchInput);
+        document.getElementById('clearSearchBtn').addEventListener('click', clearSearch);
+        
+        document.getElementById('openAddModalBtn').addEventListener('click', openModalForAdd);
+        document.getElementById('modalCancelBtn').addEventListener('click', closeModal);
+        document.getElementById('modalConfirmBtn').addEventListener('click', onModalConfirm);
+        
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                if (modalEl.classList.contains('open')) closeModal();
+                if (drawerOverlay.classList.contains('open')) closeDrawer();
+            }
+        });
+    }
+    
+    function init() {
+        loadTasks();
+        bindGlobalEvents();
+        setupTaskDelegation();
+        filterText = "";
+        if (searchInputElem) searchInputElem.value = "";
+        renderTaskList();
+    }
+    
+    init();
+</script>
+</body>
+</html>
